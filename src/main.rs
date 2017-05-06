@@ -1,10 +1,9 @@
-extern crate fruently;
+extern crate clap;
 extern crate iron;
 extern crate params;
 extern crate time;
 
-use fruently::fluent::Fluent;
-use fruently::forwardable::JsonForwardable;
+use clap::{Arg, App};
 use iron::prelude::*;
 use iron::status;
 use iron::{BeforeMiddleware, AfterMiddleware, typemap};
@@ -37,7 +36,9 @@ impl AfterMiddleware for ResponseTime {
 
 fn accept_order(req: &mut Request) -> IronResult<Response> {
     let obj: HashMap<String, String> = pack_info(req);
-    thread::spawn(move || { logging_request(obj); });
+    thread::spawn(move || {
+                      println!("[LOG]{:?}", obj);
+                  });
     Ok(Response::with(status::Created))
 }
 
@@ -55,18 +56,38 @@ fn pack_info(req: &mut Request) -> HashMap<String, String> {
     return obj;
 }
 
-fn logging_request(obj: HashMap<String, String>) {
-
-    let fruently = Fluent::new("127.0.0.1:24224", "test");
-    match fruently.post(&obj) {
-        Err(e) => println!("[ERR]{:?}", e),
-        Ok(_) => println!("[SUC]{:?}", obj),
-    }
-}
-
 fn main() {
+    let matches = App::new("Pedigree")
+        .version("1.0")
+        .author("deadcheat")
+        .about("simple-request logger written in rustlang.")
+        .arg(Arg::with_name("host")
+                 .short("h")
+                 .long("host")
+                 .value_name("HOST-NAME")
+                 .help("Set hostname of this app. if empty, it'll use localhost.")
+                 .required(false))
+        .arg(Arg::with_name("port")
+                 .short("p")
+                 .long("port")
+                 .value_name("PORT-NUM")
+                 .help("Set portnum of this app. if empty, it'll use 3000.")
+                 .required(false))
+        .get_matches();
+    let host = if matches.is_present("host") {
+        matches.value_of("host").unwrap()
+    } else {
+        "localhost"
+    };
+    let port = if matches.is_present("port") {
+        matches.value_of("port").unwrap()
+    } else {
+        "3000"
+    };
     let mut chain = Chain::new(accept_order);
     chain.link_before(ResponseTime);
     chain.link_after(ResponseTime);
-    Iron::new(chain).http("localhost:3000").unwrap();
+    Iron::new(chain)
+        .http(format!("{}:{}", host, port))
+        .unwrap();
 }
