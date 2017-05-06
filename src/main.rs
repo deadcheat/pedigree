@@ -1,20 +1,24 @@
-extern crate iron;
-extern crate time;
 extern crate fruently;
+extern crate iron;
 extern crate params;
+extern crate time;
 
 use fruently::fluent::Fluent;
-use std::collections::HashMap;
 use fruently::forwardable::JsonForwardable;
 use iron::prelude::*;
+use iron::status;
 use iron::{BeforeMiddleware, AfterMiddleware, typemap};
-use time::precise_time_ns;
-use std::io::Read;
 use params::Params;
+use time::precise_time_ns;
+use std::collections::HashMap;
+use std::thread;
+
 
 struct ResponseTime;
 
-impl typemap::Key for ResponseTime { type Value = u64; }
+impl typemap::Key for ResponseTime {
+    type Value = u64;
+}
 
 impl BeforeMiddleware for ResponseTime {
     fn before(&self, req: &mut Request) -> IronResult<()> {
@@ -31,7 +35,13 @@ impl AfterMiddleware for ResponseTime {
     }
 }
 
-fn hello_world(req: &mut Request) -> IronResult<Response> {
+fn accept_order(req: &mut Request) -> IronResult<Response> {
+    let obj: HashMap<String, String> = pack_info(req);
+    thread::spawn(move || { logging_request(obj); });
+    Ok(Response::with(status::Created))
+}
+
+fn pack_info(req: &mut Request) -> HashMap<String, String> {
     let mut obj: HashMap<String, String> = HashMap::new();
 
     obj.insert("Method".to_string(), req.method.to_string());
@@ -42,19 +52,20 @@ fn hello_world(req: &mut Request) -> IronResult<Response> {
     let map = req.get_ref::<Params>().unwrap();
     obj.insert("Params".to_string(), format!("{:?}", map));
 
-    // let mut payload = String::new();
-    // req.body.read_to_string(&mut payload).unwrap();
-    // obj.insert("Body".to_string(), payload);
+    return obj;
+}
+
+fn logging_request(obj: HashMap<String, String>) {
+
     let fruently = Fluent::new("127.0.0.1:24224", "test");
     match fruently.post(&obj) {
-        Err(e) => println!("{:?}", e),
-        Ok(_) => println!("{:?}", obj),
+        Err(e) => println!("[ERR]{:?}", e),
+        Ok(_) => println!("[SUC]{:?}", obj),
     }
-    Ok(Response::with((iron::status::Ok, "Hello World")))
 }
 
 fn main() {
-    let mut chain = Chain::new(hello_world);
+    let mut chain = Chain::new(accept_order);
     chain.link_before(ResponseTime);
     chain.link_after(ResponseTime);
     Iron::new(chain).http("localhost:3000").unwrap();
