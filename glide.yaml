@@ -3,3 +3,5 @@ import:
 - package: github.com/mitchellh/go-homedir
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
+- package: go.uber.org/zap
+  version: ~1.4.0
