@@ -15,8 +15,12 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 
+	"github.com/deadcheat/pedigree/app"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // loggerCmd represents the logger command
@@ -39,9 +43,25 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// loggerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	// loggerCmd.Flags().StringP()
+	app.Value = &app.AppEnv{}
+	app.Value.Logger, _ = zap.NewDevelopment()
+	app.Value.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
+	app.Value.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
-	fmt.Println("logger called")
+	hostName := fmt.Sprintf("%s:%d", *app.Value.ServerHost, *app.Value.ServerPort)
+	log.Printf("server start in %s \n", hostName)
+	http.HandleFunc("/", loggingHandler)
+	if err := http.ListenAndServe(
+		hostName,
+		nil); err != nil {
+		defer app.Value.Logger.Sync()
+		app.Value.Logger.Error("http-error occured", zap.Error(err))
+	}
+}
+
+func loggingHandler(w http.ResponseWriter, r *http.Request) {
+	defer app.Value.Logger.Sync()
+	app.Value.Logger.Info("tracking.request", zap.Any("request", r))
 }
