@@ -24,9 +24,7 @@ var loggerCmd = &cobra.Command{
 	Use:   "logger",
 	Short: "startup request-logging server",
 	Long:  `startup request-logging server`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("logger called")
-	},
+	Run:   startLogging,
 }
 
 func init() {
@@ -45,5 +43,5 @@ func init() {
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
-
+	fmt.Println("logger called")
 }
