@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
-	"github.com/k0kubun/pp"
 	"go.uber.org/zap"
 )
 
@@ -35,7 +34,6 @@ func EstablishFluent() *fluent.Fluent {
 	host := *Value.FluentHost
 	port := *Value.FluentPort
 	if host == "" || port == 0 {
-		pp.Println("hoge", Value)
 		return nil
 	}
 	f, err := fluent.New(fluent.Config{FluentPort: port, FluentHost: host})
