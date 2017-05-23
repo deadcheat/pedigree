@@ -19,7 +19,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/deadcheat/pedigree/actionstore"
 	"github.com/deadcheat/pedigree/app"
+	"github.com/deadcheat/pedigree/executablelogger"
+	"github.com/deadcheat/pedigree/logger/console"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -45,7 +48,7 @@ func init() {
 	// is called directly, e.g.:
 	// loggerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	app.Value = &app.AppEnv{}
-	app.Value.Logger, _ = zap.NewDevelopment()
+	app.Value.Logger, _ = zap.NewProduction()
 	app.Value.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
 	app.Value.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
 }
@@ -73,61 +76,68 @@ func loggingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Form
-	form := NewKeyValueArray()
-	for k, v := range r.Form {
-		form.Add(map[string]interface{}{
-			k: v,
-		})
-	}
-	post := NewKeyValueArray()
-	for k, v := range r.PostForm {
-		post.Add(map[string]interface{}{
-			k: v,
-		})
-	}
+	go func(r *http.Request) {
+		// Form
+		form := NewKeyValueArray()
+		for k, v := range r.Form {
+			form.Add(map[string]interface{}{
+				k: v,
+			})
+		}
+		post := NewKeyValueArray()
+		for k, v := range r.PostForm {
+			post.Add(map[string]interface{}{
+				k: v,
+			})
+		}
 
-	// Header
-	header := NewKeyValueArray()
-	for k, v := range r.Header {
-		header.Add(map[string]interface{}{
-			k: v,
-		})
-	}
+		// Header
+		header := NewKeyValueArray()
+		for k, v := range r.Header {
+			header.Add(map[string]interface{}{
+				k: v,
+			})
+		}
 
-	// Cookies
-	cookies := NewKeyValueArray()
-	requestedCookies := r.Cookies()
-	for i := range requestedCookies {
-		c := requestedCookies[i]
-		cookies.Add(map[string]interface{}{
-			c.Domain: c.String(),
-		})
-	}
+		// Cookies
+		cookies := NewKeyValueArray()
+		requestedCookies := r.Cookies()
+		for i := range requestedCookies {
+			c := requestedCookies[i]
+			cookies.Add(map[string]interface{}{
+				c.Domain: c.String(),
+			})
+		}
 
-	// Request
-	request := map[string]interface{}{
-		"Method":     r.Method,
-		"URL":        r.URL.String(),
-		"Host":       r.Host,
-		"Proto":      r.Proto,
-		"RequestURI": r.RequestURI,
-		"RemoteAddr": r.RemoteAddr,
-		"Referer":    r.Referer(),
-		"UA":         r.UserAgent(),
-	}
+		// Request
+		request := map[string]interface{}{
+			"Method":     r.Method,
+			"URL":        r.URL.String(),
+			"Host":       r.Host,
+			"Proto":      r.Proto,
+			"RequestURI": r.RequestURI,
+			"RemoteAddr": r.RemoteAddr,
+			"Referer":    r.Referer(),
+			"UA":         r.UserAgent(),
+		}
 
-	o := NewKeyValueArray()
-	o.Add(map[string]interface{}{"Request": request})
-	o.Add(map[string]interface{}{"Header": header.Data})
-	o.Add(map[string]interface{}{"Body": string(b)})
-	o.Add(map[string]interface{}{"Form": form.Data})
-	o.Add(map[string]interface{}{"PostForm": post.Data})
-	o.Add(map[string]interface{}{"Cookie": cookies.Data})
-	// log through zap
-	app.Value.Logger.Info("tracking.request",
-		zap.Any("RequestData", o.Data),
-	)
+		o := NewKeyValueArray()
+		o.Add(map[string]interface{}{"Request": request})
+		o.Add(map[string]interface{}{"Header": header.Data})
+		o.Add(map[string]interface{}{"Body": string(b)})
+		o.Add(map[string]interface{}{"Form": form.Data})
+		o.Add(map[string]interface{}{"PostForm": post.Data})
+		o.Add(map[string]interface{}{"Cookie": cookies.Data})
+
+		as := actionstore.NewActionStore()
+		as.Object = o
+		as.Add(executablelogger.NewExecutableLogger(console.NewZapLogger(
+			app.TrackingTag, app.RequestDataname,
+		)))
+		if err := as.Next(); err != nil {
+			fmt.Printf("Error occured in parallel routine, err: %v \n", err)
+		}
+	}(r)
 }
 
 // KVArray Key-Value形式のペアオブジェクトを格納する

@@ -10,3 +10,8 @@ type AppEnv struct {
 	ServerHost *string
 	ServerPort *int
 }
+
+const (
+	TrackingTag     = "tracking.request"
+	RequestDataname = "RequestData"
+)
