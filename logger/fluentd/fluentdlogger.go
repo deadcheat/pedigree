@@ -29,7 +29,6 @@ func (f *FluentLogger) Log(o interface{}) (err error) {
 	if f == nil {
 		return
 	}
-	defer f.Logger.Close()
 	m := map[string]interface{}{
 		f.Name: o,
 	}

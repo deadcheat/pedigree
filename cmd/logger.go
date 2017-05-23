@@ -68,6 +68,9 @@ func init() {
 
 func startLogging(cmd *cobra.Command, args []string) {
 	app.Value.Fluent = app.EstablishFluent()
+	if app.Value.Fluent != nil {
+		defer app.Value.Fluent.Close()
+	}
 	hostName := fmt.Sprintf("%s:%d", *app.Value.ServerHost, *app.Value.ServerPort)
 	log.Printf("server start in %s \n", hostName)
 	http.HandleFunc("/", loggingHandler)
