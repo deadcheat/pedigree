@@ -5,6 +5,10 @@ import:
 - package: github.com/spf13/viper
 - package: go.uber.org/zap
   version: ~1.4.0
+- package: github.com/fluent/fluent-logger-golang
+  version: ^1.2.1
+  subpackages:
+  - fluent
 testImport:
 - package: github.com/golang/mock
   subpackages:

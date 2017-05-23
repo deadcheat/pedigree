@@ -1,6 +1,10 @@
-hash: cef2aa368cc72dfa34191448300f78c77fbd0eea4fd42f3a67b36c5a4d0eb8b1
-updated: 2017-05-22T17:28:32.557380948+09:00
+hash: fc04c5a396d66dbe89e223388904e5821a2661912cb3429677a70fe33ed54afc
+updated: 2017-05-23T20:05:08.274789086+09:00
 imports:
+- name: github.com/fluent/fluent-logger-golang
+  version: 28bdb662295c1b7aca09c1a4edbf9430010775a9
+  subpackages:
+  - fluent
 - name: github.com/golang/mock
   version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
   subpackages:
@@ -9,12 +13,18 @@ imports:
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
+- name: github.com/philhofer/fwd
+  version: 98c11a7a6ec829d672b03833c3d69a7fae1ca972
 - name: github.com/spf13/cobra
   version: ca57f0f5dba473a8a58765d16d7e811fb8027add
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 0967fc9aceab2ce9da34061253ac10fb99bba5b2
+- name: github.com/tinylib/msgp
+  version: 1cce05a45012c07001dbfb1679c2f25ac0c189e6
+  subpackages:
+  - msgp
 - name: go.uber.org/atomic
   version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
 - name: go.uber.org/zap

@@ -23,6 +23,7 @@ import (
 	"github.com/deadcheat/pedigree/app"
 	"github.com/deadcheat/pedigree/executablelogger"
 	"github.com/deadcheat/pedigree/logger/console"
+	"github.com/deadcheat/pedigree/logger/fluentd"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -66,6 +67,7 @@ func init() {
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
+	app.Value.Fluent = app.EstablishFluent()
 	hostName := fmt.Sprintf("%s:%d", *app.Value.ServerHost, *app.Value.ServerPort)
 	log.Printf("server start in %s \n", hostName)
 	http.HandleFunc("/", loggingHandler)
@@ -142,9 +144,12 @@ func loggingHandler(w http.ResponseWriter, r *http.Request) {
 		o.Add(map[string]interface{}{"Cookie": cookies.Data})
 
 		as := actionstore.NewActionStore()
-		as.Object = o
+		as.Object = o.Data
 		as.Add(executablelogger.NewExecutableLogger(console.NewZapLogger(
-			app.TrackingTag, app.RequestDataname,
+			*app.Value.Tag, *app.Value.ObjectName,
+		)))
+		as.Add(executablelogger.NewExecutableLogger(fluentd.NewFluentlogger(
+			*app.Value.Tag, *app.Value.ObjectName,
 		)))
 		if err := as.Next(); err != nil {
 			fmt.Printf("Error occured in parallel routine, err: %v \n", err)

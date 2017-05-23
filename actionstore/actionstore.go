@@ -52,6 +52,9 @@ func NewActionStoreWithConfig(c *Config) *ActionStore {
 
 // Add storeにExecutableをAdd
 func (a *ActionStore) Add(e chainer.Executable) {
+	if a == nil {
+		return
+	}
 	defer a.sizeUp()
 	p := a.size
 	if a.vacancy() {
@@ -67,7 +70,10 @@ func (a *ActionStore) Add(e chainer.Executable) {
 }
 
 // Next 次のActionを実行する
-func (a *ActionStore) Next() error {
+func (a *ActionStore) Next() (err error) {
+	if a == nil {
+		return
+	}
 	// 全部終わった == Executableがnil入ってる
 	s := a.store
 	p := a.pos
