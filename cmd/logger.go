@@ -31,8 +31,16 @@ import (
 var loggerCmd = &cobra.Command{
 	Use:   "logger",
 	Short: "startup request-logging server",
-	Long:  `startup request-logging server`,
-	Run:   startLogging,
+	Long: `
+__________             .___.__                                           .____                                               ._.
+\______   \  ____    __| _/|__|   ____  _______   ____    ____           |    |      ____     ____     ____    ____  _______ | |
+ |     ___/_/ __ \  / __ | |  |  / ___\ \_  __ \_/ __ \ _/ __ \   ______ |    |     /  _ \   / ___\   / ___\ _/ __ \ \_  __ \| |
+ |    |    \  ___/ / /_/ | |  | / /_/  > |  | \/\  ___/ \  ___/  /_____/ |    |___ (  <_> ) / /_/  > / /_/  >\  ___/  |  | \/ \|
+ |____|     \___  >\____ | |__| \___  /  |__|    \___  > \___  >         |_______ \ \____/  \___  /  \___  /  \___  > |__|    __
+                \/      \/     /_____/               \/      \/                  \/        /_____/  /_____/       \/          \/
+pedigree-logger is one & only function of pedigree.
+startup request-logging server.`,
+	Run: startLogging,
 }
 
 func init() {
@@ -51,6 +59,10 @@ func init() {
 	app.Value.Logger, _ = zap.NewProduction()
 	app.Value.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
 	app.Value.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
+	app.Value.Tag = loggerCmd.Flags().StringP("tag", "t", app.TrackingTag, "Tag name that should be passed to fluentd, default: "+app.TrackingTag)
+	app.Value.ObjectName = loggerCmd.Flags().StringP("name", "n", app.RequestDataname, "Top-Level object's name that will be logged, default: "+app.RequestDataname)
+	app.Value.FluentHost = loggerCmd.Flags().String("fluent-host", "", "specify fluentd host default is not set and never access fluentd")
+	app.Value.FluentPort = loggerCmd.Flags().Int("fluent-port", 0, "specify fluentd port default is not set and never access fluentd")
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
@@ -76,7 +88,7 @@ func loggingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func(r *http.Request) {
+	go func(r *http.Request, b []byte) {
 		// Form
 		form := NewKeyValueArray()
 		for k, v := range r.Form {
@@ -137,7 +149,7 @@ func loggingHandler(w http.ResponseWriter, r *http.Request) {
 		if err := as.Next(); err != nil {
 			fmt.Printf("Error occured in parallel routine, err: %v \n", err)
 		}
-	}(r)
+	}(r, b)
 }
 
 // KVArray Key-Value形式のペアオブジェクトを格納する

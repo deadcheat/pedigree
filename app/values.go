@@ -9,6 +9,10 @@ type AppEnv struct {
 	Logger     *zap.Logger
 	ServerHost *string
 	ServerPort *int
+	Tag        *string
+	ObjectName *string
+	FluentHost *string
+	FluentPort *int
 }
 
 const (
