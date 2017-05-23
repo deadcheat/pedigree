@@ -7,22 +7,22 @@ import (
 )
 
 const (
-	defaultRange = 10
+	defaultExpansion = 10
 )
 
 // DefaultConfig デフォルト設定で実行するためのConfigstruct
 var DefaultConfig = &Config{
 	Object:    nil,
-	SizeRange: defaultRange,
+	Expansion: defaultExpansion,
 }
 
 // ActionStore ExecutableなActionをStoreし、Chainableを実装する
 type ActionStore struct {
-	store       []chainer.Executable
-	size        int
-	pos         int
-	sizeUpRange int
-	Object      interface{}
+	store     []chainer.Executable
+	size      int
+	pos       int
+	expansion int
+	Object    interface{}
 }
 
 // NewActionStore ActionStoreを生成（Objectはnil）
@@ -33,20 +33,20 @@ func NewActionStore() *ActionStore {
 // Config ActionStore生成のためのコンフィグstruct
 type Config struct {
 	Object    interface{}
-	SizeRange int
+	Expansion int
 }
 
 // NewActionStoreWithConfig ActionStoreを生成(Objectを指定する)
 func NewActionStoreWithConfig(c *Config) *ActionStore {
-	if c.SizeRange <= 0 {
-		c.SizeRange = defaultRange
+	if c.Expansion <= 0 {
+		c.Expansion = defaultExpansion
 	}
 	return &ActionStore{
-		store:       make([]chainer.Executable, c.SizeRange),
-		size:        0,
-		pos:         0,
-		sizeUpRange: c.SizeRange,
-		Object:      c.Object,
+		store:     make([]chainer.Executable, c.Expansion),
+		size:      0,
+		pos:       0,
+		expansion: c.Expansion,
+		Object:    c.Object,
 	}
 }
 
@@ -58,7 +58,7 @@ func (a *ActionStore) Add(e chainer.Executable) {
 		a.store[p] = e
 		return
 	}
-	newStore := make([]chainer.Executable, a.size+a.sizeUpRange)
+	newStore := make([]chainer.Executable, a.size+a.expansion)
 	for i := range a.store {
 		newStore[i] = a.store[i]
 	}

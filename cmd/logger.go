@@ -15,6 +15,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -62,6 +63,87 @@ func startLogging(cmd *cobra.Command, args []string) {
 }
 
 func loggingHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
 	defer app.Value.Logger.Sync()
-	app.Value.Logger.Info("tracking.request", zap.Any("request", r))
+	// Body
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// Form
+	form := NewKeyValueArray()
+	for k, v := range r.Form {
+		form.Add(map[string]interface{}{
+			k: v,
+		})
+	}
+	post := NewKeyValueArray()
+	for k, v := range r.PostForm {
+		post.Add(map[string]interface{}{
+			k: v,
+		})
+	}
+
+	// Header
+	header := NewKeyValueArray()
+	for k, v := range r.Header {
+		header.Add(map[string]interface{}{
+			k: v,
+		})
+	}
+
+	// Cookies
+	cookies := NewKeyValueArray()
+	requestedCookies := r.Cookies()
+	for i := range requestedCookies {
+		c := requestedCookies[i]
+		cookies.Add(map[string]interface{}{
+			c.Domain: c.String(),
+		})
+	}
+
+	// Request
+	request := map[string]interface{}{
+		"Method":     r.Method,
+		"URL":        r.URL.String(),
+		"Host":       r.Host,
+		"Proto":      r.Proto,
+		"RequestURI": r.RequestURI,
+		"RemoteAddr": r.RemoteAddr,
+		"Referer":    r.Referer(),
+		"UA":         r.UserAgent(),
+	}
+
+	o := NewKeyValueArray()
+	o.Add(map[string]interface{}{"Request": request})
+	o.Add(map[string]interface{}{"Header": header.Data})
+	o.Add(map[string]interface{}{"Body": string(b)})
+	o.Add(map[string]interface{}{"Form": form.Data})
+	o.Add(map[string]interface{}{"PostForm": post.Data})
+	o.Add(map[string]interface{}{"Cookie": cookies.Data})
+	// log through zap
+	app.Value.Logger.Info("tracking.request",
+		zap.Any("RequestData", o.Data),
+	)
+}
+
+// KVArray Key-Value形式のペアオブジェクトを格納する
+type KVArray struct {
+	Data []map[string]interface{} `json:"data,omitdata"`
+}
+
+// NewKeyValueArray KVArray生成
+func NewKeyValueArray() *KVArray {
+	return &KVArray{
+		Data: make([]map[string]interface{}, 0),
+	}
+}
+
+// Add 要素を追加する
+func (k *KVArray) Add(kv map[string]interface{}) {
+	k.Data = append(k.Data, kv)
+	return
 }

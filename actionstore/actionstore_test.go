@@ -18,7 +18,7 @@ func TestActionStore_Add(t *testing.T) {
 	me := mock_chainer.NewMockExecutable(ctrl)
 
 	as := NewActionStore()
-	r := DefaultConfig.SizeRange
+	r := DefaultConfig.Expansion
 	// １件追加した場合には配列サイズが拡張されないこと
 	as.Add(me)
 	if len(as.Store()) != r || as.Size() != 1 {
@@ -42,7 +42,7 @@ func TestActionStore_Add(t *testing.T) {
 	// Config指定で小さいものを定義したときに、defaultに戻されていること
 	as = NewActionStoreWithConfig(&Config{
 		Object:    nil,
-		SizeRange: -1,
+		Expansion: -1,
 	})
 	if len(as.Store()) != 10 {
 		t.Error("NewActionStoreWithConfig() will change their size-range to default-value(10) when argment is invalid")
@@ -60,7 +60,7 @@ func TestActionStore_Next(t *testing.T) {
 	test := "test"
 	c := &Config{
 		Object:    test,
-		SizeRange: 1,
+		Expansion: 1,
 	}
 	var as chainer.Chainable = NewActionStoreWithConfig(c)
 	as.Add(m1)
