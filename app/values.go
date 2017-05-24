@@ -15,6 +15,7 @@ var Env *EnvStruct
 var ErrLogger *log.Logger
 
 func init() {
+	Env = &EnvStruct{}
 	ErrLogger = log.New(os.Stderr, "[ERROR]", log.LstdFlags|log.Lshortfile)
 }
 

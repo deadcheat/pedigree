@@ -16,6 +16,7 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/deadcheat/pedigree/actionstore"
@@ -45,18 +46,10 @@ startup request-logging server.`,
 
 func init() {
 	RootCmd.AddCommand(loggerCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// loggerCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// loggerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	app.Env = &app.EnvStruct{}
-	app.Env.Logger, _ = zap.NewProduction()
+	// Produtionのconfigそのままでいいと思うんだけどOutputPathsがstderrなので標準エラーに吐かれちゃうのだけ変更したい
+	conf := zap.NewProductionConfig()
+	conf.OutputPaths = []string{"stdout"}
+	app.Env.Logger, _ = conf.Build()
 	app.Env.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
 	app.Env.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
 	app.Env.Tag = loggerCmd.Flags().StringP("tag", "t", app.TrackingTag, "Tag name that should be passed to fluentd, default: "+app.TrackingTag)
@@ -71,7 +64,7 @@ func startLogging(cmd *cobra.Command, args []string) {
 		defer app.Env.Fluent.Close()
 	}
 	hostName := fmt.Sprintf("%s:%d", *app.Env.ServerHost, *app.Env.ServerPort)
-	app.ErrLogger.Printf("server start in %s \n", hostName)
+	log.Printf("server start in %s \n", hostName)
 	http.HandleFunc("/", loggingHandler)
 	if err := http.ListenAndServe(
 		hostName,
