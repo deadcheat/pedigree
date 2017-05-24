@@ -14,11 +14,11 @@ type FluentLogger struct {
 
 // NewFluentlogger FluentLoggerを新規に生成
 func NewFluentlogger(t string, n string) *FluentLogger {
-	if app.Value.Fluent == nil {
+	if app.Env.Fluent == nil {
 		return nil
 	}
 	return &FluentLogger{
-		Logger: app.Value.Fluent,
+		Logger: app.Env.Fluent,
 		Tag:    t,
 		Name:   n,
 	}

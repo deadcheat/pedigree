@@ -13,7 +13,7 @@ type ZapLogger struct {
 // NewZapLogger Zap経由のログ出力を行うZapLoggerを生成
 func NewZapLogger(t string, n string) *ZapLogger {
 	return &ZapLogger{
-		Logger: app.Value.Logger,
+		Logger: app.Env.Logger,
 		Tag:    t,
 		Name:   n,
 	}

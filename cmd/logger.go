@@ -16,7 +16,6 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/deadcheat/pedigree/actionstore"
@@ -56,35 +55,35 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// loggerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	app.Value = &app.AppEnv{}
-	app.Value.Logger, _ = zap.NewProduction()
-	app.Value.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
-	app.Value.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
-	app.Value.Tag = loggerCmd.Flags().StringP("tag", "t", app.TrackingTag, "Tag name that should be passed to fluentd, default: "+app.TrackingTag)
-	app.Value.ObjectName = loggerCmd.Flags().StringP("name", "n", app.RequestDataname, "Top-Level object's name that will be logged, default: "+app.RequestDataname)
-	app.Value.FluentHost = loggerCmd.Flags().String("fluent-host", "", "specify fluentd host default is not set and never access fluentd")
-	app.Value.FluentPort = loggerCmd.Flags().Int("fluent-port", 0, "specify fluentd port default is not set and never access fluentd")
+	app.Env = &app.EnvStruct{}
+	app.Env.Logger, _ = zap.NewProduction()
+	app.Env.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
+	app.Env.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
+	app.Env.Tag = loggerCmd.Flags().StringP("tag", "t", app.TrackingTag, "Tag name that should be passed to fluentd, default: "+app.TrackingTag)
+	app.Env.ObjectName = loggerCmd.Flags().StringP("name", "n", app.RequestDataname, "Top-Level object's name that will be logged, default: "+app.RequestDataname)
+	app.Env.FluentHost = loggerCmd.Flags().String("fluent-host", "", "specify fluentd host default is not set and never access fluentd")
+	app.Env.FluentPort = loggerCmd.Flags().Int("fluent-port", 0, "specify fluentd port default is not set and never access fluentd")
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
-	app.Value.Fluent = app.EstablishFluent()
-	if app.Value.Fluent != nil {
-		defer app.Value.Fluent.Close()
+	app.Env.Fluent = app.EstablishFluent()
+	if app.Env.Fluent != nil {
+		defer app.Env.Fluent.Close()
 	}
-	hostName := fmt.Sprintf("%s:%d", *app.Value.ServerHost, *app.Value.ServerPort)
-	log.Printf("server start in %s \n", hostName)
+	hostName := fmt.Sprintf("%s:%d", *app.Env.ServerHost, *app.Env.ServerPort)
+	app.ErrLogger.Printf("server start in %s \n", hostName)
 	http.HandleFunc("/", loggingHandler)
 	if err := http.ListenAndServe(
 		hostName,
 		nil); err != nil {
-		defer app.Value.Logger.Sync()
-		app.Value.Logger.Error("http-error occured", zap.Error(err))
+		defer app.Env.Logger.Sync()
+		app.Env.Logger.Error("http-error occured", zap.Error(err))
 	}
 }
 
 func loggingHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	defer app.Value.Logger.Sync()
+	defer app.Env.Logger.Sync()
 	// Body
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -149,13 +148,13 @@ func loggingHandler(w http.ResponseWriter, r *http.Request) {
 		as := actionstore.NewActionStore()
 		as.Object = o.Data
 		as.Add(executablelogger.NewExecutableLogger(console.NewZapLogger(
-			*app.Value.Tag, *app.Value.ObjectName,
+			*app.Env.Tag, *app.Env.ObjectName,
 		)))
 		as.Add(executablelogger.NewExecutableLogger(fluentd.NewFluentlogger(
-			*app.Value.Tag, *app.Value.ObjectName,
+			*app.Env.Tag, *app.Env.ObjectName,
 		)))
 		if err := as.Next(); err != nil {
-			fmt.Printf("Error occured in parallel routine, err: %v \n", err)
+			app.ErrLogger.Printf("Error occured in parallel routine, err: %v \n", err)
 		}
 	}(r, b)
 }
