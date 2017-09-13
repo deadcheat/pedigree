@@ -103,6 +103,7 @@ func startLogging(cmd *cobra.Command, args []string) {
 	log.Printf("server start in %s \n", hostName)
 	e := echo.New()
 	e.Logger.SetOutput(os.Stderr)
+	e.Use(middleware.CORS())
 	e.Use(middleware.Recover())
 	if sentinelEnv != nil {
 		e.Use(pm.SentinelWithConfig(*sentinelEnv))

@@ -1,10 +1,10 @@
 hash: 8b2c88dc040e86661e27fd6eba1b369cda04a8fa9fd8e81b291efea7022c8b7d
-updated: 2017-09-13T20:28:11.96045707+09:00
+updated: 2017-09-14T03:38:06.577974682+09:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/dgrijalva/jwt-go
-  version: 6c8dedd55f8a2e41f605de6d5d66e51ed1f299fc
+  version: a539ee1a749a2b895533f979515ac7e6e0f5b650
 - name: github.com/fluent/fluent-logger-golang
   version: 28bdb662295c1b7aca09c1a4edbf9430010775a9
   subpackages:
@@ -21,14 +21,14 @@ imports:
   - '...'
   - middleware
 - name: github.com/labstack/gommon
-  version: 1121fd3e243c202482226a7afe4dcd07ffc4139a
+  version: 779b8a8b9850a97acba6a3fe20feb628c39e17c1
   subpackages:
   - bytes
   - color
   - log
   - random
 - name: github.com/mattn/go-colorable
-  version: ded68f7a9561c023e790de24279db7ebf473ea80
+  version: ad5389df28cdac544c99bd7b9161a0b5b6ca9d1b
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mitchellh/go-homedir
@@ -42,7 +42,7 @@ imports:
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/tinylib/msgp
-  version: 28c2e9cf2896557562e58304747d8c4e62e3ffb4
+  version: f5d1c43674fb2aa6734103c3c4990324552cf06b
   subpackages:
   - msgp
 - name: github.com/valyala/bytebufferpool
@@ -61,12 +61,12 @@ imports:
   - internal/multierror
   - zapcore
 - name: golang.org/x/crypto
-  version: e1a4589e7d3ea14a3352255d04b6f1a418845e5e
+  version: 81e90905daefcd6fd217b62423c0908922eadb30
   subpackages:
   - acme
   - acme/autocert
 - name: golang.org/x/sys
-  version: b90f89a1e7a9c1f6b918820b3daa7f08488c8594
+  version: 2d6f6f883a06fc0d5f4b14a81e4c28705ea64c15
   subpackages:
   - unix
 testImports: []
