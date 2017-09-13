@@ -33,16 +33,10 @@ type EnvStruct struct {
 	CORSEnabled  bool
 }
 
-// CORSEnv Configファイルに記載するCORSの設定
-type CORSEnv struct {
-	AllowedOrigins     []string
-	AllowedMethods     []string
-	AllowedHeaders     []string
-	ExposedHeaders     []string
-	AllowCredentials   bool
-	MaxAge             int
-	OptionsPassthrough bool
-	Debug              bool
+// SentinelEnv Configファイルに記載するCORSの設定
+type SentinelEnv struct {
+	AllowOrigins   []string `json:"allow_origins"`
+	AllowAllOrigin bool     `json:"allows_all_origin"`
 }
 
 const (

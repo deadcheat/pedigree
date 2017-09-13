@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
@@ -26,7 +27,9 @@ import (
 	"github.com/deadcheat/pedigree/executablelogger"
 	"github.com/deadcheat/pedigree/logger/console"
 	"github.com/deadcheat/pedigree/logger/fluentd"
-	"github.com/rs/cors"
+	pm "github.com/deadcheat/pedigree/middleware"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -63,7 +66,7 @@ func init() {
 
 }
 
-func corsEnv(path *string) (env *cors.Cors) {
+func sentinelEnv(path *string) (env *pm.SentinelConfig) {
 	// この辺別途funcに切り出すべき
 	if path == nil || *path == "" {
 		// 未指定の場合は設定なしで終わり
@@ -74,65 +77,51 @@ func corsEnv(path *string) (env *cors.Cors) {
 		// initでのエラーはFatal呼んだほうが良い気がしている
 		log.Fatalf("Error occured when reading cors-config file %s. errors: %v \n", corsPath, err)
 	} else {
-		var conf app.CORSEnv
+		var conf app.SentinelEnv
 		_, err := toml.DecodeFile(corsPath, &conf)
 		if err != nil {
 			log.Fatalf("Error occured when reading cors-config file %s. errors: %v \n", corsPath, err)
 		}
-		env = cors.New(cors.Options{
-			AllowedOrigins:     conf.AllowedOrigins,
-			AllowedMethods:     conf.AllowedMethods,
-			AllowedHeaders:     conf.AllowedHeaders,
-			ExposedHeaders:     conf.ExposedHeaders,
-			AllowCredentials:   conf.AllowCredentials,
-			MaxAge:             conf.MaxAge,
-			OptionsPassthrough: conf.OptionsPassthrough,
-			Debug:              conf.Debug,
-		})
+		env = &pm.SentinelConfig{
+			AllowOrigins:    conf.AllowOrigins,
+			AllowsAllOrigin: conf.AllowAllOrigin,
+		}
 	}
 	return
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
 	// config load
-	corsEnv := corsEnv(app.Env.CORSConfFile)
+	sentinelEnv := sentinelEnv(app.Env.CORSConfFile)
 
 	// establish fluent connection
 	app.Env.Fluent = app.EstablishFluent()
 	if app.Env.Fluent != nil {
-		defer app.Env.Fluent.Close()
+		defer func() { _ = app.Env.Fluent.Close() }()
 	}
 	hostName := fmt.Sprintf("%s:%d", *app.Env.ServerHost, *app.Env.ServerPort)
 	log.Printf("server start in %s \n", hostName)
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", loggingHandler)
-	var ha http.Handler
-	if corsEnv != nil {
-		app.Env.CORSEnabled = true
-		ha = corsEnv.Handler(mux)
-	} else {
-		ha = mux
+	e := echo.New()
+	e.Logger.SetOutput(os.Stderr)
+	e.Use(middleware.Recover())
+	if sentinelEnv != nil {
+		e.Use(pm.SentinelWithConfig(*sentinelEnv))
 	}
-	if err := http.ListenAndServe(hostName, ha); err != nil {
-		defer app.Env.Logger.Sync()
-		app.Env.Logger.Error("http-error occured", zap.Error(err))
-	}
+	e.Any("/", logging)
+	e.Logger.Fatal(e.Start(hostName))
 }
 
-func loggingHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	defer app.Env.Logger.Sync()
-	allowOrigin := w.Header().Get("Access-Control-Allow-Origin")
-	if app.Env.CORSEnabled && allowOrigin == "" {
-		// allowがなければ終わり
-		return
-	}
-	// Body
-	b, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+func logging(c echo.Context) error {
+	r := c.Request()
+	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		return err
+	}
+	defer func() { _ = app.Env.Logger.Sync() }()
+	b, err := ioutil.ReadAll(r.Body)
+	defer func() { _ = r.Body.Close() }()
+	if err != nil {
+		return err
 	}
 
 	go func(r *http.Request, b []byte) {
@@ -200,6 +189,7 @@ func loggingHandler(w http.ResponseWriter, r *http.Request) {
 			app.ErrLogger.Printf("Error occured in parallel routine, err: %v \n", err)
 		}
 	}(r, b)
+	return nil
 }
 
 // KVArray Key-Value形式のペアオブジェクトを格納する
@@ -217,5 +207,4 @@ func NewKeyValueArray() *KVArray {
 // Add 要素を追加する
 func (k *KVArray) Add(kv map[string]interface{}) {
 	k.Data = append(k.Data, kv)
-	return
 }
