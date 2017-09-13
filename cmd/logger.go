@@ -63,16 +63,13 @@ func init() {
 
 }
 
-func startLogging(cmd *cobra.Command, args []string) {
-	// config load
-	var corsEnv *cors.Cors = nil
-	corsFile := app.Env.CORSConfFile
+func corsEnv(path *string) (env *cors.Cors) {
 	// この辺別途funcに切り出すべき
-	if corsFile == nil || *corsFile == "" {
+	if path == nil || *path == "" {
 		// 未指定の場合は設定なしで終わり
 		return
 	}
-	corsPath, err := filepath.Abs(*corsFile)
+	corsPath, err := filepath.Abs(*path)
 	if err != nil {
 		// initでのエラーはFatal呼んだほうが良い気がしている
 		log.Fatalf("Error occured when reading cors-config file %s. errors: %v \n", corsPath, err)
@@ -82,7 +79,7 @@ func startLogging(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalf("Error occured when reading cors-config file %s. errors: %v \n", corsPath, err)
 		}
-		corsEnv = cors.New(cors.Options{
+		env = cors.New(cors.Options{
 			AllowedOrigins:     conf.AllowedOrigins,
 			AllowedMethods:     conf.AllowedMethods,
 			AllowedHeaders:     conf.AllowedHeaders,
@@ -93,6 +90,12 @@ func startLogging(cmd *cobra.Command, args []string) {
 			Debug:              conf.Debug,
 		})
 	}
+	return
+}
+
+func startLogging(cmd *cobra.Command, args []string) {
+	// config load
+	corsEnv := corsEnv(app.Env.CORSConfFile)
 
 	// establish fluent connection
 	app.Env.Fluent = app.EstablishFluent()
@@ -105,13 +108,12 @@ func startLogging(cmd *cobra.Command, args []string) {
 	mux.HandleFunc("/", loggingHandler)
 	var ha http.Handler
 	if corsEnv != nil {
+		app.Env.CORSEnabled = true
 		ha = corsEnv.Handler(mux)
 	} else {
 		ha = mux
 	}
-	if err := http.ListenAndServe(
-		hostName,
-		ha); err != nil {
+	if err := http.ListenAndServe(hostName, ha); err != nil {
 		defer app.Env.Logger.Sync()
 		app.Env.Logger.Error("http-error occured", zap.Error(err))
 	}
@@ -120,6 +122,11 @@ func startLogging(cmd *cobra.Command, args []string) {
 func loggingHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	defer app.Env.Logger.Sync()
+	allowOrigin := w.Header().Get("Access-Control-Allow-Origin")
+	if app.Env.CORSEnabled && allowOrigin == "" {
+		// allowがなければ終わり
+		return
+	}
 	// Body
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()

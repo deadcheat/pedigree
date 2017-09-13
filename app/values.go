@@ -30,6 +30,7 @@ type EnvStruct struct {
 	FluentHost   *string
 	FluentPort   *int
 	CORSConfFile *string
+	CORSEnabled  bool
 }
 
 // CORSEnv Configファイルに記載するCORSの設定
