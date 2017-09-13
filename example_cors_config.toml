@@ -1,0 +1,12 @@
+allowedOrigins = [
+	"www.foo.net"
+]
+allowedMethods = [
+	"GET"
+]
+allowedHeaders = []
+exposedHeaders = []
+allowCredentials = false
+maxAge = 0
+optionsPassthrough = false
+debug = false

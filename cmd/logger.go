@@ -18,12 +18,15 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/deadcheat/pedigree/actionstore"
 	"github.com/deadcheat/pedigree/app"
 	"github.com/deadcheat/pedigree/executablelogger"
 	"github.com/deadcheat/pedigree/logger/console"
 	"github.com/deadcheat/pedigree/logger/fluentd"
+	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -50,25 +53,67 @@ func init() {
 	conf := zap.NewProductionConfig()
 	conf.OutputPaths = []string{"stdout"}
 	app.Env.Logger, _ = conf.Build()
-	app.Env.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "specify hostname, default: localhost")
-	app.Env.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "specify portnum, default: 3000")
+	app.Env.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "Specify hostname, default: localhost")
+	app.Env.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "Specify portnum, default: 3000")
 	app.Env.Tag = loggerCmd.Flags().StringP("tag", "t", app.TrackingTag, "Tag name that should be passed to fluentd, default: "+app.TrackingTag)
 	app.Env.ObjectName = loggerCmd.Flags().StringP("name", "n", app.RequestDataname, "Top-Level object's name that will be logged, default: "+app.RequestDataname)
-	app.Env.FluentHost = loggerCmd.Flags().String("fluent-host", "", "specify fluentd host default is not set and never access fluentd")
-	app.Env.FluentPort = loggerCmd.Flags().Int("fluent-port", 0, "specify fluentd port default is not set and never access fluentd")
+	app.Env.FluentHost = loggerCmd.Flags().String("fluent-host", "", "Specify fluentd host default is not set and never access fluentd")
+	app.Env.FluentPort = loggerCmd.Flags().Int("fluent-port", 0, "Specify fluentd port default is not set and never access fluentd")
+	app.Env.CORSConfFile = loggerCmd.Flags().StringP("cors-config", "c", "", "Specify config file path")
+
+}
+
+func corsEnv(path *string) (env *cors.Cors) {
+	// この辺別途funcに切り出すべき
+	if path == nil || *path == "" {
+		// 未指定の場合は設定なしで終わり
+		return
+	}
+	corsPath, err := filepath.Abs(*path)
+	if err != nil {
+		// initでのエラーはFatal呼んだほうが良い気がしている
+		log.Fatalf("Error occured when reading cors-config file %s. errors: %v \n", corsPath, err)
+	} else {
+		var conf app.CORSEnv
+		_, err := toml.DecodeFile(corsPath, &conf)
+		if err != nil {
+			log.Fatalf("Error occured when reading cors-config file %s. errors: %v \n", corsPath, err)
+		}
+		env = cors.New(cors.Options{
+			AllowedOrigins:     conf.AllowedOrigins,
+			AllowedMethods:     conf.AllowedMethods,
+			AllowedHeaders:     conf.AllowedHeaders,
+			ExposedHeaders:     conf.ExposedHeaders,
+			AllowCredentials:   conf.AllowCredentials,
+			MaxAge:             conf.MaxAge,
+			OptionsPassthrough: conf.OptionsPassthrough,
+			Debug:              conf.Debug,
+		})
+	}
+	return
 }
 
 func startLogging(cmd *cobra.Command, args []string) {
+	// config load
+	corsEnv := corsEnv(app.Env.CORSConfFile)
+
+	// establish fluent connection
 	app.Env.Fluent = app.EstablishFluent()
 	if app.Env.Fluent != nil {
 		defer app.Env.Fluent.Close()
 	}
 	hostName := fmt.Sprintf("%s:%d", *app.Env.ServerHost, *app.Env.ServerPort)
 	log.Printf("server start in %s \n", hostName)
-	http.HandleFunc("/", loggingHandler)
-	if err := http.ListenAndServe(
-		hostName,
-		nil); err != nil {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", loggingHandler)
+	var ha http.Handler
+	if corsEnv != nil {
+		app.Env.CORSEnabled = true
+		ha = corsEnv.Handler(mux)
+	} else {
+		ha = mux
+	}
+	if err := http.ListenAndServe(hostName, ha); err != nil {
 		defer app.Env.Logger.Sync()
 		app.Env.Logger.Error("http-error occured", zap.Error(err))
 	}
@@ -77,6 +122,11 @@ func startLogging(cmd *cobra.Command, args []string) {
 func loggingHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	defer app.Env.Logger.Sync()
+	allowOrigin := w.Header().Get("Access-Control-Allow-Origin")
+	if app.Env.CORSEnabled && allowOrigin == "" {
+		// allowがなければ終わり
+		return
+	}
 	// Body
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()

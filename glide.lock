@@ -1,12 +1,14 @@
-hash: fc04c5a396d66dbe89e223388904e5821a2661912cb3429677a70fe33ed54afc
-updated: 2017-05-23T20:05:08.274789086+09:00
+hash: 056a6c008203357168ab42ec097a0916f1b01533a158c8b1e106bec2fb970c08
+updated: 2017-09-13T02:22:47.526941445+09:00
 imports:
+- name: github.com/BurntSushi/toml
+  version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/fluent/fluent-logger-golang
   version: 28bdb662295c1b7aca09c1a4edbf9430010775a9
   subpackages:
   - fluent
 - name: github.com/golang/mock
-  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
+  version: 18f6dd13ccdd227b8ebc546ca95cd62a02f3970c
   subpackages:
   - gomock
 - name: github.com/inconshreveable/mousetrap
@@ -14,21 +16,23 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/philhofer/fwd
-  version: 98c11a7a6ec829d672b03833c3d69a7fae1ca972
+  version: bb6d471dc95d4fe11e432687f8b70ff496cf3136
+- name: github.com/rs/cors
+  version: 7af7a1e09ba336d2ea14b1ce73bf693c6837dbf6
 - name: github.com/spf13/cobra
-  version: ca57f0f5dba473a8a58765d16d7e811fb8027add
+  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
-  version: 0967fc9aceab2ce9da34061253ac10fb99bba5b2
+  version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/tinylib/msgp
-  version: 1cce05a45012c07001dbfb1679c2f25ac0c189e6
+  version: 28c2e9cf2896557562e58304747d8c4e62e3ffb4
   subpackages:
   - msgp
 - name: go.uber.org/atomic
   version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
 - name: go.uber.org/zap
-  version: fab453050a7a08c35f31fc5fff6f2dbd962285ab
+  version: 9cabc84638b70e564c3dab2766efcb1ded2aac9f
   subpackages:
   - buffer
   - internal/bufferpool

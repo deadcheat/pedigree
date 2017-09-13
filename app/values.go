@@ -21,14 +21,28 @@ func init() {
 
 // EnvStruct アプリケーション実行においてpackage-global
 type EnvStruct struct {
-	Logger     *zap.Logger
-	Fluent     *fluent.Fluent
-	ServerHost *string
-	ServerPort *int
-	Tag        *string
-	ObjectName *string
-	FluentHost *string
-	FluentPort *int
+	Logger       *zap.Logger
+	Fluent       *fluent.Fluent
+	ServerHost   *string
+	ServerPort   *int
+	Tag          *string
+	ObjectName   *string
+	FluentHost   *string
+	FluentPort   *int
+	CORSConfFile *string
+	CORSEnabled  bool
+}
+
+// CORSEnv Configファイルに記載するCORSの設定
+type CORSEnv struct {
+	AllowedOrigins     []string
+	AllowedMethods     []string
+	AllowedHeaders     []string
+	ExposedHeaders     []string
+	AllowCredentials   bool
+	MaxAge             int
+	OptionsPassthrough bool
+	Debug              bool
 }
 
 const (
