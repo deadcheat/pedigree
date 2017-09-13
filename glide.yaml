@@ -9,10 +9,12 @@ import:
   version: ^1.2.1
   subpackages:
   - fluent
-- package: github.com/rs/cors
-  version: ^1.2.0
 - package: github.com/BurntSushi/toml
   version: ^0.3.0
+- package: github.com/labstack/echo
+  version: ^3.2.3
+  subpackages:
+  - '...'
 testImport:
 - package: github.com/golang/mock
   subpackages:
