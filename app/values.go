@@ -21,16 +21,16 @@ func init() {
 
 // EnvStruct アプリケーション実行においてpackage-global
 type EnvStruct struct {
-	Logger       *zap.Logger
-	Fluent       *fluent.Fluent
-	ServerHost   *string
-	ServerPort   *int
-	Tag          *string
-	ObjectName   *string
-	FluentHost   *string
-	FluentPort   *int
-	CORSConfFile *string
-	CORSEnabled  bool
+	Logger          *zap.Logger
+	Fluent          *fluent.Fluent
+	ServerHost      *string
+	ServerPort      *int
+	Tag             *string
+	ObjectName      *string
+	FluentHost      *string
+	FluentPort      *int
+	CORSConfFile    *string
+	EncodeTimestamp *bool
 }
 
 // SentinelEnv Configファイルに記載するCORSの設定

@@ -20,6 +20,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
+
+	"go.uber.org/zap/zapcore"
 
 	"github.com/BurntSushi/toml"
 	"github.com/deadcheat/pedigree/actionstore"
@@ -52,10 +55,6 @@ startup request-logging server.`,
 
 func init() {
 	RootCmd.AddCommand(loggerCmd)
-	// Produtionのconfigそのままでいいと思うんだけどOutputPathsがstderrなので標準エラーに吐かれちゃうのだけ変更したい
-	conf := zap.NewProductionConfig()
-	conf.OutputPaths = []string{"stdout"}
-	app.Env.Logger, _ = conf.Build()
 	app.Env.ServerHost = loggerCmd.Flags().StringP("host", "H", "localhost", "Specify hostname, default: localhost")
 	app.Env.ServerPort = loggerCmd.Flags().IntP("port", "p", 3000, "Specify portnum, default: 3000")
 	app.Env.Tag = loggerCmd.Flags().StringP("tag", "t", app.TrackingTag, "Tag name that should be passed to fluentd, default: "+app.TrackingTag)
@@ -63,7 +62,7 @@ func init() {
 	app.Env.FluentHost = loggerCmd.Flags().String("fluent-host", "", "Specify fluentd host default is not set and never access fluentd")
 	app.Env.FluentPort = loggerCmd.Flags().Int("fluent-port", 0, "Specify fluentd port default is not set and never access fluentd")
 	app.Env.CORSConfFile = loggerCmd.Flags().StringP("cors-config", "c", "", "Specify config file path")
-
+	app.Env.EncodeTimestamp = loggerCmd.Flags().BoolP("encode-timestamp", "e", false, "if you want encode unixtime to local time format")
 }
 
 func sentinelEnv(path *string) (env *pm.SentinelConfig) {
@@ -94,6 +93,17 @@ func startLogging(cmd *cobra.Command, args []string) {
 	// config load
 	sentinelEnv := sentinelEnv(app.Env.CORSConfFile)
 
+	conf := zap.NewProductionConfig()
+	// Produtionのconfigそのままでいいと思うんだけどOutputPathsがstderrなので標準エラーに吐かれちゃうのだけ変更したい
+	if *app.Env.EncodeTimestamp {
+		conf.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+			const layout = "2006-01-02 15:04:05"
+			local, _ := time.LoadLocation("Local")
+			enc.AppendString(t.In(local).Format(layout))
+		}
+	}
+	conf.OutputPaths = []string{"stdout"}
+	app.Env.Logger, _ = conf.Build()
 	// establish fluent connection
 	app.Env.Fluent = app.EstablishFluent()
 	if app.Env.Fluent != nil {
@@ -109,7 +119,10 @@ func startLogging(cmd *cobra.Command, args []string) {
 		e.Use(pm.SentinelWithConfig(*sentinelEnv))
 	}
 	e.Any("/", logging)
-	e.Logger.Fatal(e.Start(hostName))
+	if err := e.Start(hostName); err != nil {
+		e.Logger.Error(err)
+		os.Exit(1)
+	}
 }
 
 func logging(c echo.Context) error {
