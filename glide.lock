@@ -1,5 +1,5 @@
 hash: 8b2c88dc040e86661e27fd6eba1b369cda04a8fa9fd8e81b291efea7022c8b7d
-updated: 2018-01-18T16:26:11.745287+09:00
+updated: 2018-05-04T02:13:36.271032+09:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -15,10 +15,8 @@ imports:
   - gomock
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
-- name: github.com/k0kubun/pp
-  version: d1532fc5d94ecdf2da29e24d7b99721f3287de4a
 - name: github.com/labstack/echo
-  version: b338075a0fc6e1a0683dbf03d09b4957a289e26f
+  version: 6d227dfea4d2e52cb76856120b3c17f758139b4e
   subpackages:
   - '...'
   - middleware
@@ -52,7 +50,7 @@ imports:
 - name: github.com/valyala/fasttemplate
   version: dcecefd839c4193db0d35b88ec65b4c12d360ab0
 - name: go.uber.org/atomic
-  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
+  version: 1ea20fb1cbb1cc08cbd0d913a96dead89aa18289
 - name: go.uber.org/zap
   version: 9cabc84638b70e564c3dab2766efcb1ded2aac9f
   subpackages:
