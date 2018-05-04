@@ -1,16 +1,16 @@
-hash: 8b2c88dc040e86661e27fd6eba1b369cda04a8fa9fd8e81b291efea7022c8b7d
-updated: 2018-05-04T02:13:36.271032+09:00
+hash: 817bc06c928ab1c871879fc14cc289c74be72f5c4b2a08ef61c5a03dd34944a5
+updated: 2018-05-04T22:37:13.06789+09:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/dgrijalva/jwt-go
-  version: a539ee1a749a2b895533f979515ac7e6e0f5b650
+  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/fluent/fluent-logger-golang
   version: 8bbc2356beaf021b04c9bd5cdc76ea5a7ccb40ec
   subpackages:
   - fluent
 - name: github.com/golang/mock
-  version: 18f6dd13ccdd227b8ebc546ca95cd62a02f3970c
+  version: 22bbf0ddf08105dfa364d0a2fa619dfa71014af5
   subpackages:
   - gomock
 - name: github.com/inconshreveable/mousetrap
@@ -21,28 +21,28 @@ imports:
   - '...'
   - middleware
 - name: github.com/labstack/gommon
-  version: 779b8a8b9850a97acba6a3fe20feb628c39e17c1
+  version: 588f4e8bddc6cb45c27b448e925c7fd6a5545434
   subpackages:
   - bytes
   - color
   - log
   - random
 - name: github.com/mattn/go-colorable
-  version: ad5389df28cdac544c99bd7b9161a0b5b6ca9d1b
+  version: efa589957cd060542a26d2dd7832fd6a6c6c3ade
 - name: github.com/mattn/go-isatty
-  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/philhofer/fwd
   version: bb6d471dc95d4fe11e432687f8b70ff496cf3136
 - name: github.com/spf13/cobra
-  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
+  version: ef82de70bb3f60c65fb8eebacbb2d122ef517385
 - name: github.com/spf13/pflag
-  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+  version: 583c0c0531f06d5278b7d917446061adc344b5cd
 - name: github.com/spf13/viper
-  version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
+  version: 8dc2790b029dc41e2b8ff772c63c26adbb1db70d
 - name: github.com/tinylib/msgp
-  version: f5d1c43674fb2aa6734103c3c4990324552cf06b
+  version: 3b5c87ab5fb00c660bf85b888445d9a01db64db4
   subpackages:
   - msgp
 - name: github.com/valyala/bytebufferpool
@@ -61,12 +61,17 @@ imports:
   - internal/multierror
   - zapcore
 - name: golang.org/x/crypto
-  version: 81e90905daefcd6fd217b62423c0908922eadb30
+  version: 1f94bef427e370e425e55b172f3b5e300ef38304
   subpackages:
   - acme
+  - acme/...
   - acme/autocert
+- name: golang.org/x/net
+  version: 640f4622ab692b87c2f3a94265e6f579fe38263d
+  subpackages:
+  - context
 - name: golang.org/x/sys
-  version: 2d6f6f883a06fc0d5f4b14a81e4c28705ea64c15
+  version: 6f686a352de66814cdd080d970febae7767857a3
   subpackages:
   - unix
 testImports: []

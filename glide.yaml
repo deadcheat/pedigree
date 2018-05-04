@@ -12,9 +12,12 @@ import:
 - package: github.com/BurntSushi/toml
   version: ^0.3.0
 - package: github.com/labstack/echo
-  version: ^3.2.3
+  version: ^3.3.5
   subpackages:
   - '...'
+- package: golang.org/x/crypto
+  subpackages:
+  - acme/...
 testImport:
 - package: github.com/golang/mock
   subpackages:
